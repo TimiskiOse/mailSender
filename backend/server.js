@@ -14,10 +14,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-
 app.use(express.json());
 app.use(cors());
 
+// ✅ Set up Nodemailer transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -26,6 +26,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// ✅ Email Sending Route
 app.post("/send-email", async (req, res) => {
   const { to, subject, html } = req.body;
 
@@ -34,6 +35,8 @@ app.post("/send-email", async (req, res) => {
   }
 
   try {
+    console.log(`📩 Sending email to: ${to}`);
+
     await transporter.sendMail({
       from: `"VISTA FINANCE" <${process.env.EMAIL_USER}>`,
       to,
@@ -48,18 +51,23 @@ app.post("/send-email", async (req, res) => {
       ],
     });
 
+    console.log("✅ Email sent successfully!");
     res.status(200).json({ message: "Email sent successfully" });
   } catch (error) {
+    console.error("❌ Error sending email:", error);
     res.status(500).json({ message: "Error sending email", error });
-    console.error(error);
   }
 });
 
+// ✅ Serve frontend in production
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+  const frontendPath = path.join(__dirname, "frontend/dist");
+
+  app.use(express.static(frontendPath));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+    res.sendFile(path.resolve(frontendPath, "index.html"));
   });
 }
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
